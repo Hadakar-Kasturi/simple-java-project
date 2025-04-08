@@ -6,7 +6,8 @@ pipeline {
     }
 
     environment {
-        SCANNER_HOME = tool 'my_sonar'  // Path to SonarQube tool
+        // SCANNER_HOME is not needed unless you're explicitly pointing to a specific path for the scanner
+        // SCANNER_HOME = tool 'my_sonar'  // Path to SonarQube tool (not needed if using withSonarQubeEnv)
     }
 
     stages {
@@ -22,7 +23,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('my_sonar') {
                     sh """
-                    mvn clean verify sonar:sonar \
+                    mvn clean install sonar:sonar \
                     -Dsonar.projectKey="Test-project-${env.BUILD_NUMBER}" \
                     -Dsonar.projectName="Test-Project - Build #${env.BUILD_NUMBER}" \
                     -Dsonar.qualitygate.wait=true \
