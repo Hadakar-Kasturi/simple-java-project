@@ -48,21 +48,7 @@ pipeline {
 
         stage('Artifact Upload') {
             steps {
-                nexusArtifactUploader artifacts: [
-                    [
-                        artifactId: 'my_repo_nexus',
-                        classifier: '',
-                        file: 'target/my_repo_nexus-1.0.war', // Corrected file path
-                        type: '.war'
-                    ]
-                ], 
-                credentialsId: 'nexus', 
-                groupId: 'works.buddy.samples', 
-                nexusUrl: 'http://52.77.248.42:8081/', 
-                nexusVersion: 'nexus3', 
-                protocol: 'http', 
-                repository: 'my_repo_nexus', 
-                version: '1.0'
+               nexusArtifactUploader artifacts: [[artifactId: 'my_repo_nexus', classifier: '', file: 'target//my_repo_nexus-1.0.war', type: '.war']], credentialsId: 'nexus', groupId: 'works.buddy.samples', nexusUrl: 'http://52.77.248.42:8081/', nexusVersion: 'nexus3', protocol: 'http', repository: 'my_repo_nexus', version: '1.0'
             }
         }
     }
