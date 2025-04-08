@@ -4,9 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>works.buddy.samples</groupId>
     <artifactId>works-with-heroku</artifactId>
-    <version>1.0</version>
+    <version>${revision}</version>
     <packaging>war</packaging>
-
     <dependencies>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -29,42 +28,44 @@
     </dependencies>
 
     <build>
-        <plugins>
-            <!-- Maven Dependency Plugin for copying jetty-runner -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.eclipse.jetty</groupId>
-                                    <artifactId>jetty-runner</artifactId>
-                                    <version>9.3.3.v20150827</version>
-                                    <destFileName>jetty-runner.jar</destFileName>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+  <plugins>
+    <!-- Maven WAR Plugin -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-war-plugin</artifactId>
+      <version>3.4.0</version>
+      <configuration>
+        <failOnMissingWebXml>false</failOnMissingWebXml>
+      </configuration>
+    </plugin>
 
-            <!-- SonarQube Maven Plugin -->
-            <plugin>
-                <groupId>org.sonarsource.scanner.maven</groupId>
-                <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.7.0.1746</version> <!-- Use a version compatible with Java 8 -->
-                <configuration>
-                    <sonar.host.url>http://localhost:9000</sonar.host.url> <!-- Replace with your SonarQube server URL -->
-                    <sonar.login>your-sonarqube-token-here</sonar.login> <!-- Replace with your SonarQube token -->
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <!-- Maven Dependency Plugin to download Jetty Runner -->
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-dependency-plugin</artifactId>
+      <version>2.3</version>
+      <executions>
+        <execution>
+          <phase>package</phase>
+          <goals>
+            <goal>copy</goal>
+          </goals>
+          <configuration>
+            <artifactItems>
+              <artifactItem>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-runner</artifactId>
+                <version>9.3.3.v20150827</version>
+                <destFileName>jetty-runner.jar</destFileName>
+              </artifactItem>
+            </artifactItems>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
+</build>
+<properties>
+    <revision>1.0</revision> <!-- default value -->
+</properties>
 </project>
