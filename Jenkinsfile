@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'
+        maven 'Maven'  // Define the tool name as configured in Jenkins
     }
 
     environment {
-        SCANNER_HOME = tool 'my_sonar'  
+        SCANNER_HOME = tool 'my_sonar'  // Use the SonarQube tool
     }
 
     stages {
@@ -16,11 +16,11 @@ pipeline {
             }
         }
 
-        stage('SonarQube') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('my_sonar') {
                     sh """
-                    mvn sonar:sonar \
+                    mvn clean verify sonar:sonar \
                     -Dsonar.projectKey="demo-project-${env.BUILD_NUMBER}" \
                     -Dsonar.projectName="demo-Project - Build #${env.BUILD_NUMBER}" \
                     -Dsonar.qualitygate.wait=true \
@@ -34,7 +34,11 @@ pipeline {
             steps {
                 script {
                     timeout(time: 5, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: false
+                        // This step waits for the SonarQube quality gate status
+                        def qualityGate = waitForQualityGate()
+                        if (qualityGate.status != 'OK') {
+                            error "Quality Gate failed! Aborting build."
+                        }
                     }
                 }
             }
@@ -57,7 +61,7 @@ pipeline {
                 nexusArtifactUploader artifacts: [[
                     artifactId: 'my_repo_nexus', 
                     classifier: '', 
-                    file: 'target/my_repo_nexus-1.0.war', 
+                    file: 'target/my_repo_nexus-1.0.war',  // Make sure this file exists
                     type: 'war'
                 ]], 
                 credentialsId: 'nexus', 
@@ -68,6 +72,19 @@ pipeline {
                 repository: 'my_repo_nexus', 
                 version: "${BUILD_ID}"
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Cleaning up after build..."
+            cleanWs()  // Clean workspace after build to avoid issues in future runs
+        }
+        success {
+            echo "Build and SonarQube analysis completed successfully!"
+        }
+        failure {
+            echo "Build failed. Please check the logs for more details."
         }
     }
 }
