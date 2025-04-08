@@ -2,27 +2,29 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'  // Define the tool name as configured in Jenkins
+        maven 'maven'  // Ensure the correct Maven tool is configured
     }
 
     environment {
-        SCANNER_HOME = tool 'my_sonar'  // Use the SonarQube tool
+        SCANNER_HOME = tool 'my_sonar'  // Path to SonarQube tool
     }
 
     stages {
+        // Stage to checkout the code from Git
         stage('Checkout') {
             steps {
                 git branch: 'master', credentialsId: 'git_token', url: 'https://github.com/Hadakar-Kasturi/simple-java-project.git'
             }
         }
 
+        // Stage for SonarQube analysis
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('my_sonar') {
                     sh """
                     mvn clean verify sonar:sonar \
-                    -Dsonar.projectKey="demo-project-${env.BUILD_NUMBER}" \
-                    -Dsonar.projectName="demo-Project - Build #${env.BUILD_NUMBER}" \
+                    -Dsonar.projectKey="Test-project-${env.BUILD_NUMBER}" \
+                    -Dsonar.projectName="Test-Project - Build #${env.BUILD_NUMBER}" \
                     -Dsonar.qualitygate.wait=true \
                     -Dsonar.projectVersion=${BUILD_ID}
                     """
@@ -30,55 +32,27 @@ pipeline {
             }
         }
 
+        // Stage to wait for and check the SonarQube Quality Gate status
         stage('Quality Gate') {
             steps {
                 script {
+                    // Set a timeout to wait for the quality gate result
                     timeout(time: 5, unit: 'MINUTES') {
-                        // This step waits for the SonarQube quality gate status
-                        def qualityGate = waitForQualityGate()
-                        if (qualityGate.status != 'OK') {
-                            error "Quality Gate failed! Aborting build."
+                        def qualityGate = waitForQualityGate()  // Get quality gate result
+                        if (qualityGate.status != 'OK') {  // Check if the quality gate status is not OK
+                            error "Quality Gate failed! Aborting pipeline."  // Abort pipeline if it fails
                         }
                     }
                 }
             }
         }
-
-        stage('Build') {
-            steps {
-                sh 'mvn clean compile'
-            }
-        }
-
-        stage('Package') {
-            steps {
-                sh 'mvn clean package'
-            }
-        }
-
-        stage('Artifact Upload') {
-            steps {
-                nexusArtifactUploader artifacts: [[
-                    artifactId: 'my_repo_nexus', 
-                    classifier: '', 
-                    file: 'target/my_repo_nexus-1.0.war',  // Make sure this file exists
-                    type: 'war'
-                ]], 
-                credentialsId: 'nexus', 
-                groupId: 'works.buddy.samples', 
-                nexusUrl: 'http://52.77.248.42:8081/', 
-                nexusVersion: 'nexus3', 
-                protocol: 'http', 
-                repository: 'my_repo_nexus', 
-                version: "${BUILD_ID}"
-            }
-        }
     }
 
+    // Post actions: cleanup or notifications
     post {
         always {
-            echo "Cleaning up after build..."
-            cleanWs()  // Clean workspace after build to avoid issues in future runs
+            echo "Pipeline completed"
+            cleanWs()  // Clean workspace after the build
         }
         success {
             echo "Build and SonarQube analysis completed successfully!"
