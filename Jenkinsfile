@@ -18,48 +18,56 @@ pipeline {
 
         stage('SonarQube') {
             steps {
-                  
-                   withSonarQubeEnv('my_sonar') { 
-                   sh """
-                   mvn sonar:sonar \
-                   -Dsonar.projectKey="demo-project-${env.BUILD_NUMBER}"\
-                   -Dsonar.projectName="demo-Project - Build #${env.BUILD_NUMBER}"\
-                   -Dsonar.qualitygate.wait=true\
-                   -Dsonar.projectVersion=${BUILD_ID}\
-                      """
-                   }
-                
+                withSonarQubeEnv('my_sonar') {
+                    sh """
+                    mvn sonar:sonar \
+                    -Dsonar.projectKey="demo-project-${env.BUILD_NUMBER}" \
+                    -Dsonar.projectName="demo-Project - Build #${env.BUILD_NUMBER}" \
+                    -Dsonar.qualitygate.wait=true \
+                    -Dsonar.projectVersion=${BUILD_ID}
+                    """
+                }
             }
-            
         }
-                   
-           stage('Quality Gate') {
+
+        stage('Quality Gate') {
             steps {
                 script {
                     timeout(time: 5, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline:false
-                    
+                        waitForQualityGate abortPipeline: false
+                    }
                 }
             }
-            
-            }
-             stage('build') {
-                  steps {
-                     sh 'mvn clean compile'
-            }
-               stage('Package'){
-               steps{
-                   sh 'mvn clean package'
-               }        
         }
-            stage('artifact upload') {
-               steps {
-                nexusArtifactUploader artifacts: [[artifactId: 'my_repo_nexus', classifier: '', file: 'target//my_repo_nexus-1.0.war', type: '.war']], credentialsId: 'nexus', groupId: 'works.buddy.samples', nexusUrl: 'http://52.77.248.42:8081/', nexusVersion: 'nexus3', protocol: 'http', repository: 'my_repo_nexus', version:'${BUILD_ID}'
-            }
-        }
-        
-  }
-    
-}
 
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Artifact Upload') {
+            steps {
+                nexusArtifactUploader artifacts: [[
+                    artifactId: 'my_repo_nexus', 
+                    classifier: '', 
+                    file: 'target/my_repo_nexus-1.0.war', 
+                    type: 'war'
+                ]], 
+                credentialsId: 'nexus', 
+                groupId: 'works.buddy.samples', 
+                nexusUrl: 'http://52.77.248.42:8081/', 
+                nexusVersion: 'nexus3', 
+                protocol: 'http', 
+                repository: 'my_repo_nexus', 
+                version: "${BUILD_ID}"
+            }
+        }
+    }
 }
